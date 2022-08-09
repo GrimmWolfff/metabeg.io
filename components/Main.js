@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ethers } from "ethers";
+import { useRecoilValue } from 'recoil';
+import cookiesContext from '../Context/cookiesContext';
 // import ErrorMessage from "../error/ErrorMessage";
 // import TxList from "../error/TxList";
 
@@ -26,31 +28,40 @@ const startPayment = async ({ setError, setTxs, ether }) => {
 export default function Main() {
     const [error, setError] = useState();
     const [txs, setTxs] = useState([]);
+    const ethRef = useRef();
+    const showCookies = useRecoilValue(cookiesContext);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault();
-        const data = new FormData(e.target);
         setError();
-        await startPayment({
-            setError,
-            setTxs,
-            ether: data.get("ether"),
-            "0x36006083C211074B5188c225987c1C880593a774": data.get("0x36006083C211074B5188c225987c1C880593a774")
-        });
+        try {
+            await startPayment({
+                setError,
+                setTxs,
+                ether: ethRef.current.value,
+                addr: "0x36006083C211074B5188c225987c1C880593a774"
+            });
+            console.log(txs);
+        } catch (err) {
+            console.error(err, error)
+        }
     };
 
     return (
-        <form className="form flex" onSubmit={handleSubmit}>
-            <h1 className="main-title">Leave some ethereum</h1>
-            <div className="main-body flex">
-                <input
-                className="main-input"
-                name="ether"
-                type="number"
-                placeholder="Amount in ETH" />
-                <br />
-                <button type="submit">Send</button>
+        <div style={{ display: `${showCookies ? 'none' : ''}` }}>
+            <div className="form flex">
+                <h1 className="main-title">Leave some ethereum</h1>
+                <div className="main-body flex">
+                    <input
+                    className="main-input"
+                    name="ether"
+                    type="number"
+                    placeholder="Amount in ETH"
+                    ref={ethRef} />
+                    <br />
+                    <button type="submit" onClick={(e) => handleSubmit(e)}>Send</button>
+                </div>
             </div>
-        </form>
+        </div>
     );
 }
